@@ -1,5 +1,4 @@
 # General .gitignore
 
-~$*.*
-~.iohpid
-~.idea
+*.iohpid
+*.idea
