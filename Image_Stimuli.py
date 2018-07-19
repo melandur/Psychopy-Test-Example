@@ -13,6 +13,12 @@ import pandas as pd
 from psychopy.iohub import launchHubServer
 from psychopy.constants import *
 from psychopy import visual, core, data, event, logging, gui
+from psychopy import prefs
+prefs.general['audioLib'] = ['pygame']
+from psychopy import sound
+import numpy as np
+from PIL import Image, ImageDraw
+import time
 
 
 class Psychopy_Example:
@@ -47,7 +53,7 @@ class Psychopy_Example:
         self.win = visual.Window(size=(1280, 1024),
                             fullscr=True,
                             screen=0,
-                            allowGUI=False,
+                            allowGUI=True,
                             allowStencil=False,
                             monitor='testMonitor',
                             color=[-1, -1, -1],
@@ -68,21 +74,28 @@ class Psychopy_Example:
         # init the iohub process
         self.io = launchHubServer()
         self.kb_device = self.io.devices.keyboard
+        # self.mouse_device = self.io.devices.mouse
 
 
     def clock(self):
         # crate timers
-        self.globalClock = core.Clock()  # to track the time since experiment started
-        self.routineTimer = core.CountdownTimer()  # to track time remaining of each (non-slip) routine
+        self.globalClock = core.Clock()
+        self.routineTimer = core.CountdownTimer()
 
 
     def text_slide(self, text):
         # initialize components for text slide
-        text = visual.TextStim(win=self.win, ori=0, name='text',
+        text = visual.TextStim(win=self.win,
+                               ori=0,
+                               name='text',
                                text=text,
                                font='Arial',
-                               pos=[0, 0], height=0.1, wrapWidth=None,
-                               color='white', colorSpace='rgb', opacity=1,
+                               pos=[0, 0],
+                               height=0.1,
+                               wrapWidth=None,
+                               color='white',
+                               colorSpace='rgb',
+                               opacity=1,
                                depth=0.0)
 
         slideclock = core.Clock()
@@ -91,12 +104,12 @@ class Psychopy_Example:
         slideclock.reset()  # clock
         frameN = 0
         # update component parameters for each repeat
-        key_resp_1 = event.BuilderKeyResponse()  # create an object of type KeyResponse
-        key_resp_1.status = NOT_STARTED
+        key_resp = event.BuilderKeyResponse()  # create an object of type KeyResponse
+        key_resp.status = NOT_STARTED
         # keep track of which components have finished
         InstructionComponents = []
         InstructionComponents.append(text)
-        InstructionComponents.append(key_resp_1)
+        InstructionComponents.append(key_resp)
         for thisComponent in InstructionComponents:
             if hasattr(thisComponent, 'status'):
                 thisComponent.status = NOT_STARTED
@@ -116,13 +129,13 @@ class Psychopy_Example:
                 text.setAutoDraw(True)
 
             # *key_resp_3* updates
-            if self.t >= 0.0 and key_resp_1.status == NOT_STARTED:
+            if self.t >= 0.0 and key_resp.status == NOT_STARTED:
                 # keep track of start time/frame for later
-                key_resp_1.tStart = self.t  # underestimates by a little under one frame
-                key_resp_1.frameNStart = frameN  # exact frame index
-                key_resp_1.status = STARTED
+                key_resp.tStart = self.t  # underestimates by a little under one frame
+                key_resp.frameNStart = frameN  # exact frame index
+                key_resp.status = STARTED
                 # keyboard checking is just starting
-            if key_resp_1.status == STARTED:
+            if key_resp.status == STARTED:
                 theseKeys = event.getKeys()
 
                 # check for quit:
@@ -159,35 +172,41 @@ class Psychopy_Example:
                 thisComponent.setAutoDraw(False)
 
 
-    def image_trial(self, time_box):
+    def image_trial(self, time_box, trippy, timeout=5):
         # ------Prepare to start Routine "trial"-------
         # initialize components for Routine "trial"
         trialClock = core.Clock()
         self.image = visual.ImageStim(win=self.win, image='trial_ressources/thunder.png')
 
-        # some image configurations
-        # self.image.setPos()
         self.image.setSize([0.5, 1.1])
-        # self.image.setOri()
 
         # set textbox for time
-        self.counter = visual.TextStim(win=self.win, ori=0, name='counter',
-                                 text=u"", font='Arial',
-                                 pos=[-0.9, -0.9], height=0.1, wrapWidth=None,
-                                 color='white', colorSpace='rgb', opacity=1,
-                                 depth=0.0)
+        self.counter = visual.TextStim(win=self.win,
+                                        ori=0,
+                                        name='counter',
+                                        text=u"",
+                                        font='Arial',
+                                        pos=[-0.9, -0.9],
+                                        height=0.1,
+                                        wrapWidth=None,
+                                        color='white',
+                                        colorSpace='rgb',
+                                        opacity=1,
+                                        depth=0.0)
+
+        self.sound = sound.Sound(value='trial_ressources/thunder.wav')
 
         self.t = 0
         trialClock.reset()  # clock
         frameN = 0
         # update component parameters for each repeat
-        key_resp_2 = event.BuilderKeyResponse()  # create an object of type KeyResponse
-        key_resp_2.status = NOT_STARTED
+        key_resp = event.BuilderKeyResponse()  # create an object of type KeyResponse
+        key_resp.status = NOT_STARTED
 
         # keep track of which components have finished
         trialComponents = []
         trialComponents.append(self.image)
-        trialComponents.append(key_resp_2)
+        trialComponents.append(key_resp)
         for thisComponent in trialComponents:
             if hasattr(thisComponent, 'status'):
                 thisComponent.status = NOT_STARTED
@@ -207,7 +226,7 @@ class Psychopy_Example:
         # -------Start Routine "trial"-----a--
         continueRoutine = True
         press_key, release_key, press_duration, key_char = "", "", "", ""
-        timeout = 5
+        timeout = timeout
 
         while continueRoutine:
             # get current time
@@ -216,28 +235,38 @@ class Psychopy_Example:
             # update/draw components on each frame
             # *text* updates
             if self.t >= 0.0 and self.image.status == NOT_STARTED:
+                self.sound.play()
                 # keep track of start time/frame for later
                 self.image.tStart = self.t  # underestimates by a little under one frame
                 self.image.frameNStart = frameN  # exact frame index
                 self.image.setAutoDraw(True)
 
-            # *key_resp_2* updates
-            if self.t >= 0.0 and key_resp_2.status == NOT_STARTED:
+            # key_resp updates
+            if self.t >= 0.0 and key_resp.status == NOT_STARTED:
                 # keep track of start time/frame for later
-                key_resp_2.tStart = self.t  # underestimates by a little under one frame
-                key_resp_2.frameNStart = frameN  # exact frame index
-                key_resp_2.status = STARTED
+                key_resp.tStart = self.t  # underestimates by a little under one frame
+                key_resp.frameNStart = frameN  # exact frame index
+                key_resp.status = STARTED
                 # keyboard checking is just starting
-                key_resp_2.clock.reset()  # now t=0
+                key_resp.clock.reset()  # now t=0
 
-            if key_resp_2.status == STARTED:
+            if key_resp.status == STARTED:
                 theseKeys = event.getKeys(keyList=['space'])
+
                 # check for quit:
                 if "escape" in theseKeys:
                     self.endExpNow = True
                 if len(theseKeys) > 0:  # at least one key was pressed
-                    key_resp_2.keys.extend(theseKeys)
-                    key_resp_2.rt.append(key_resp_2.clock.getTime())
+                    key_resp.keys.extend(theseKeys)
+                    key_resp.rt.append(key_resp.clock.getTime())
+
+            if trippy:
+                if frameN%24 == 0:
+                    self.sound.play()
+                    size = np.random.randint(1, 15)/10
+                    self.image.setPos([np.random.randint(-7, 7)/10, np.random.randint(-6, 6)/10])
+                    self.image.setSize([size, size*1.5])
+                    self.image.setOri(np.random.randint(0, 36)*10)
 
             # get pressing and char of key
             for ke in self.kb_device.getPresses():
@@ -259,6 +288,7 @@ class Psychopy_Example:
             if not continueRoutine:  # a component has requested a forced-end of Routine
                 self.routineTimer.reset()  # if we abort early the non-slip timer needs reset
                 break
+
             continueRoutine = False  # will revert to True if at least one component still running
             for thisComponent in trialComponents:
                 if hasattr(thisComponent, "status") and thisComponent.status != FINISHED:
@@ -289,8 +319,141 @@ class Psychopy_Example:
         for thisComponent in trialComponents:
             if hasattr(thisComponent, "setAutoDraw"):
                 thisComponent.setAutoDraw(False)
+                self.sound.stop()
                 if time_box:
                     self.counter.setAutoDraw(False)
+
+
+    def movie_tiral(self, timeout=10):
+        # ------Prepare to start Routine "trial"-------
+        trialClock = core.Clock()
+
+        # setub folder structure for file saving
+        if not os.path.exists(str(self.thisDir) + '\\data\\' + self.filename + '\\movie_trial\\'):
+            os.makedirs(str(self.thisDir) + '\\data\\' + self.filename + '\\movie_trial\\')
+
+        # initiate movie
+        self.mov = visual.MovieStim2(win=self.win,
+                                filename='trial_ressources/animals.mp4',
+                                flipVert=False,
+                                flipHoriz=False,
+                                loop=False,
+                                depth=0.0
+                                )
+
+        #  set movie size
+        self.mov.setSize([1920, 1080])
+
+        # initiate some text stuff
+        self.text = visual.TextStim(win=self.win,
+                                    ori=0,
+                                    name='text',
+                                    text='Please wait. \nSaving is in progress',
+                                    font='Arial',
+                                    pos=[0, 0],
+                                    height=0.1,
+                                    wrapWidth=None,
+                                    color='white',
+                                    colorSpace='rgb',
+                                    opacity=1,
+                                    depth=0.0)
+
+        # assign mouse and stuff for the loop
+        myMouse = event.Mouse()
+        counter = 0
+        self.m_pos = []
+        trialClock.reset()
+
+        while True:
+            # start movie
+            self.mov.draw()
+            self.win.flip()
+
+            # track mouse pressing event
+            mouseIsDown = myMouse.getPressed()[0]
+            myMouse.clickReset()
+
+            if mouseIsDown and not oldMouseIsDown:
+                m_po = myMouse.getPos()
+                self.m_pos.append(m_po)
+                if counter == 0:
+                    print('Clicks   Maus position')
+                print(str(counter) + '        ' + str(m_po))
+
+                # if pressed save frame to RAM
+                filename = str(self.thisDir) + '\\data\\' + self.filename + '\\movie_trial\\' + 'shot.png'
+                self.win.getMovieFrame(buffer='front')
+
+                counter += 1
+
+            oldMouseIsDown = mouseIsDown
+
+            # quit
+            if event.getKeys(keyList=['escape']):
+                self.win.close()
+                core.quit()
+                break
+
+            if trialClock.getTime() >= timeout:
+                break
+
+        # stop movie and show text
+        self.mov.stop()
+        self.win.flip()
+        self.text.draw()
+        self.win.flip()
+
+        # save frames from RAM to Folder
+        self.win.saveMovieFrames(fileName=filename, clearFrames=True)
+
+        # extract mouse clicks
+        self.x = []
+        self.y = []
+        for i in self.m_pos:
+            self.x.append(i[0])
+            self.y.append(i[1])
+
+        # export key events as column
+        df = pd.DataFrame({'X': self.x, 'Y': self.y})
+
+        # create a Pandas Excel writer using XlsxWriter as the engine.
+        writer = pd.ExcelWriter(str(self.thisDir) + '\\data\\' + self.filename + '\\' + 'Maus_Position' + '.xlsx', engine='xlsxwriter')
+
+        # convert the dataframe to an XlsxWriter Excel object.
+        df.to_excel(writer, sheet_name='Sheet1')
+
+        # close the Pandas Excel writer and output the Excel file.
+        writer.save()
+
+
+    def draw_mouse(self):
+        # get directories of saved frames
+        directory = str(self.thisDir) + '/data/' + self.filename + '/movie_trial/'
+        filelist = [file for file in os.listdir(directory) if file.endswith('.png')]
+        image_number = len(filelist)
+
+        # iterate trough all frames, draw stuff on clicked position and save frame again
+        for i in range(image_number):
+                img = Image.open(directory + filelist[i])
+                width, hight = img.size
+
+                if self.x[i] < 0:
+                    self.x_pos = (width/2 - (abs(self.x[i])) * width/2)
+                elif self.x[i] >= 0:
+                    self.x_pos = self.x[i] * width/2 + width/2
+
+                if self.y[i] < 0:
+                    self.y_pos = (hight/2 - (self.y[i]) * hight/2)
+                elif self.y[i] >= 0:
+                    self.y_pos = (1 - self.y[i]) * hight/2
+
+                dia = 50
+                dr = ImageDraw.Draw(img)
+                dr.ellipse((self.x_pos - dia/2, self.y_pos - dia/2, self.x_pos + dia/2, self.y_pos + dia/2),
+                           fill='red')
+
+                img.save(directory + filelist[i])
+                time.sleep(0.2)
 
 
     def export_excel(self):
@@ -329,6 +492,7 @@ class Psychopy_Example:
         core.quit()
 
 
+
 if __name__ == '__main__':
 
     # assign class
@@ -337,24 +501,40 @@ if __name__ == '__main__':
     # start experiment gui
     c.gui(test='Your_Test_Name')
 
-    # start io hub server
+    # # start io hub server
     c.iohubserver()
 
-    # start timers
+    # # start timers
     c.clock()
 
-    # show first text slide
-    c.text_slide(text='Please press any key if you notice something in the following image \n(Start with "Enter")')
+    # show slide
+    c.text_slide(text='Please press any key if you notice something in the following image. \n(Start with "Enter")')
+    c.text_slide(text='Please turn on the speakers. \n(Start with "Enter")')
 
     # start image trial
-    c.image_trial(time_box=True)
+    c.image_trial(time_box=True, trippy=True, timeout=6)
+
+    # show slide
+    c.text_slide(text='Congrats you have survived ;-) \nReady for next trial? \n(Start with "Enter")')
+    c.text_slide(text='Click with the mouse on stuff you like. \n(Start with "Enter")')
+
+    # start movie trial
+    c.movie_tiral(timeout=15)
+
+    # draw circle on clicked event
+    c.draw_mouse()
 
     # show second slide
-    c.text_slide(text='Congrats you have survived ;-) \nPlease contact the Staff')
+    c.text_slide(text='The end. \nPlease contact the staff \nQuit with "Enter" or "Esc"')
 
     # export data of trial
     c.export_excel()
 
     # close window and quit core
     c.end()
+
+
+
+
+
 
